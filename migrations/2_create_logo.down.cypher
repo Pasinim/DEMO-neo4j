@@ -1,0 +1,1 @@
+MATCH (m:Marca) DETACH DELETE m

@@ -1,0 +1,1 @@
+Match (m)-[r:DI]->() DELETE r

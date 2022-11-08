@@ -1,0 +1,1 @@
+Match (m)-[r:Appartiene]->() DELETE r

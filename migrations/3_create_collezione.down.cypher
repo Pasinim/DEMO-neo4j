@@ -1,0 +1,1 @@
+MATCH (c:Collezione) DETACH DELETE c
