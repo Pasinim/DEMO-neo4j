@@ -23,12 +23,6 @@ type TestContainer struct {
 	Instance testcontainers.Container
 }
 
-/*
-*
-https://hub.docker.com/_/neo4j/
-Mi devo connettere a questo docker
-*/
-
 func NewTestContainer() *TestContainer {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -49,7 +43,7 @@ func NewTestContainer() *TestContainer {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Sleeppooo")
+
 	//time.Sleep(time.Minute * 5)
 	return &TestContainer{
 		Instance: neo4j,

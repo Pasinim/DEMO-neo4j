@@ -1,1 +1,1 @@
-MATCH (c:Collezione) DETACH DELETE c
+MATCH (c:Collezione) DETACH DELETE c;
