@@ -33,11 +33,11 @@ func NewTestContainer() *TestContainer {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	req := testcontainers.ContainerRequest{
-		Image:        "neo4j:latest",
-		ExposedPorts: []string{"7474/tcp", "7687/tcp"},
+		Image:        "neo4j:4.4.12-community",
+		ExposedPorts: []string{"7687/tcp"},
 		AutoRemove:   true,
 		Env: map[string]string{
-			"NEO4J_AUTH": "neo4j/demo",
+			"NEO4J_AUTH": "neo4j/demo", //psw: demo
 		},
 		WaitingFor: wait.ForListeningPort("7687"),
 	}
@@ -56,23 +56,36 @@ func NewTestContainer() *TestContainer {
 	}
 }
 
-func (db *TestContainer) Port() int {
+func (container *TestContainer) Port() int {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	p, err := db.Instance.MappedPort(ctx, "7474")
+	p, err := container.Instance.MappedPort(ctx, "7687")
+	//container.Instance.Host(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//require.NoError(t, err) serve se fa asser nil?
+	fmt.Println("PORT:", p)
 	return p.Int()
 }
 
-func (db *TestContainer) ConnectionString() string {
-	return fmt.Sprintf("neo4j://neo4j:developer@127.0.0.1:%d/sslmode=disable", db.Port())
-}
-
-func (db *TestContainer) Close(t *testing.T) {
+func (container *TestContainer) Host() string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	require.NoError(t, db.Instance.Terminate(ctx))
+	h, err := container.Instance.Host(ctx)
+	//container.Instance.Host(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("HOST:", h)
+	return h
+}
+
+func (container *TestContainer) ConnectionString() string {
+	return fmt.Sprintf("neo4j://neo4j:demo@%s:%d/", container.Host(), container.Port())
+}
+
+func (container *TestContainer) Close(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	require.NoError(t, container.Instance.Terminate(ctx))
 }
