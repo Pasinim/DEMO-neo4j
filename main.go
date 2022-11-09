@@ -1,17 +1,15 @@
 package main
 
 import (
-	"DEMO-neo4j/utility"
+	"DEMO-neo4j/funcs"
 	"fmt"
-	_ "github.com/golang-migrate/migrate/source/file"
-	"time"
 )
 
 func main() {
+	r := funcs.New()
+	r.GetItems()
 
-	drv := utility.InitDb()
-
-	fmt.Print(drv)
-	time.Sleep(5 * time.Minute)
+	var n int
+	fmt.Scan(&n)
 
 }

@@ -28,7 +28,7 @@ func NewTestContainer() *TestContainer {
 	defer cancel()
 	req := testcontainers.ContainerRequest{
 		Image:        "neo4j:4.4.12-community",
-		ExposedPorts: []string{"7687/tcp"},
+		ExposedPorts: []string{"7687/tcp", "7474/tcp"},
 		AutoRemove:   true,
 		Env: map[string]string{
 			"NEO4J_AUTH": "neo4j/demo", //psw: demo
