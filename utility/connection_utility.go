@@ -12,6 +12,7 @@ import (
 	"fmt"
 	_ "github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
 	"testing"
@@ -44,11 +45,12 @@ func NewTestContainer() *TestContainer {
 		ContainerRequest: req,
 		Started:          true,
 	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Sleeppooo")
-	time.Sleep(time.Minute * 5)
+	//time.Sleep(time.Minute * 5)
 	return &TestContainer{
 		Instance: neo4j,
 	}
@@ -65,10 +67,9 @@ func (db *TestContainer) Port() int {
 	return p.Int()
 }
 
-//
-//func (db *TestContainer) ConnectionString() string {
-//	return fmt.Sprintf("postgres://demo:demo@127.0.0.1:%d/demo?sslmode=disable", db.Port())
-//}
+func (db *TestContainer) ConnectionString() string {
+	return fmt.Sprintf("neo4j://neo4j:developer@127.0.0.1:%d/sslmode=disable", db.Port())
+}
 
 func (db *TestContainer) Close(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)

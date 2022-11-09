@@ -1,0 +1,12 @@
+version: "3.3"
+services:
+
+  db:
+    image: neo4j:4.4.12-community
+    environment:
+      - NEO4J_AUTH=neo4j/developer
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - ./db-data:/data
