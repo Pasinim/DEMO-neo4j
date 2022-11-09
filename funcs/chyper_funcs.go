@@ -3,6 +3,7 @@ package funcs
 import (
 	"DEMO-neo4j/core"
 	"DEMO-neo4j/utility"
+	"fmt"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"log"
 )
@@ -19,7 +20,7 @@ func New() *RepoDriver {
 
 func (r *RepoDriver) GetItems() []core.Item {
 
-	session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close()
 
 	res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
@@ -49,7 +50,31 @@ func (r *RepoDriver) GetItems() []core.Item {
 /**
 * Restituisce l'item con sku passato come argomento
  */
-//func (r *RepoDriver) GetItemFromSku (sku int) (core.Item, error){
-//	//todo
-//	return  nil, nil
-//}
+func (r *RepoDriver) GetItemFromSku(sku int) (core.Item, error) {
+	session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	defer session.Close()
+	res, error := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+		query := "MATCH (m:Item) WHERE m.sku = $wantedSku RETURN m"
+		result, err := tx.Run(query, map[string]interface{}{"wantedSku": sku})
+		if err != nil {
+			log.Fatal(err)
+		}
+		if result.Next() {
+			props := result.Record().Values[0].(neo4j.Node).Props
+			retIt := core.Item{
+				Name: props["nome"].(string),
+				Sku:  sku,
+			}
+			return retIt, nil
+		}
+		return nil, nil
+	})
+
+	if error != nil {
+		log.Fatal(error)
+	}
+	if res == nil {
+		fmt.Println("RES NIL")
+	}
+	return res.(core.Item), nil
+}
