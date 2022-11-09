@@ -75,6 +75,7 @@ func (r *RepoDriver) GetItemFromSku(sku int) (core.Item, error) {
 	}
 	if res == nil {
 		fmt.Println("RES NIL")
+		//log.Fatal()
 	}
 	return res.(core.Item), nil
 }

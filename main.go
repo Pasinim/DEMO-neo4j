@@ -16,6 +16,7 @@ func main() {
 	}
 	fmt.Println(it)
 	var n int
+	fmt.Println("\tRunning...")
 	fmt.Scan(&n)
 
 }
