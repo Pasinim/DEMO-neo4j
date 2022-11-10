@@ -21,7 +21,12 @@ func New() *RepoDriver {
 func (r *RepoDriver) GetItems() []core.Item {
 
 	session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
-	defer session.Close()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+
+		}
+	}(session)
 
 	res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 		res := make([]core.Item, 0)
@@ -47,13 +52,17 @@ func (r *RepoDriver) GetItems() []core.Item {
 	return res.([]core.Item)
 }
 
-/**
-* Restituisce l'item con sku passato come argomento
- */
+// GetItemFromSku
+/* Restituisce l'item con sku passato come argomento*/
 func (r *RepoDriver) GetItemFromSku(sku int) (core.Item, error) {
 	session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
-	defer session.Close()
-	res, error := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+
+		}
+	}(session)
+	res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 		query := "MATCH (m:Item) WHERE m.sku = $wantedSku RETURN m"
 		result, err := tx.Run(query, map[string]interface{}{"wantedSku": sku})
 		if err != nil {
@@ -70,8 +79,8 @@ func (r *RepoDriver) GetItemFromSku(sku int) (core.Item, error) {
 		return nil, nil
 	})
 
-	if error != nil {
-		log.Fatal(error)
+	if err != nil {
+		log.Fatal(err)
 	}
 	if res == nil {
 		fmt.Print("RES NIL\n")
