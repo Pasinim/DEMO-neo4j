@@ -3,8 +3,10 @@ package funcs
 import (
 	"DEMO-neo4j/core"
 	"DEMO-neo4j/utility"
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"log"
 	"reflect"
 	"testing"
 )
@@ -146,6 +148,80 @@ func TestRepoDriver_GetItems(t *testing.T) {
 				t.Errorf("Gli elementi non corrispondono:\n%s", cmp.Diff(got, tt.want))
 
 			}
+		})
+	}
+}
+
+func TestRepoDriver_InsertItem(t *testing.T) {
+	type fields struct {
+		drv neo4j.Driver
+	}
+	type args struct {
+		nome string
+		sku  int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "Insert 1",
+			fields: fields{drv: drv},
+			args: args{
+				nome: "InsertTest",
+				sku:  100,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &RepoDriver{
+				drv: tt.fields.drv,
+			}
+			session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+			r.InsertItem(tt.args.nome, tt.args.sku)
+
+			res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+				query := `MATCH (m:Item) WHERE m.nome = $wantedNome AND m.sku = $wantedSku RETURN m`
+				result, err := tx.Run(query, map[string]interface{}{"wantedNome": tt.args.nome, "wantedSku": tt.args.sku})
+				if err != nil {
+					log.Fatal(err)
+					return false, err
+				}
+				var i core.Item
+				for result.Next() {
+					//if (result.Record() == nil){
+					//	return nil,
+					//}
+					props := result.Record().Values[0].(neo4j.Node).Props
+					i = core.Item{
+						Name: props["nome"].(string),
+						Sku:  int(props["sku"].(int64)),
+					}
+				}
+				return i, nil
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			got := r.InsertItem(tt.args.nome, tt.args.sku)
+
+			// creo Item per fare il confronto con quello che ottengo dalla query
+			wantedItem := core.Item{
+				Name: tt.args.nome,
+				Sku:  tt.args.sku,
+			}
+
+			if !(cmp.Equal(res.(core.Item), wantedItem)) {
+				fmt.Printf("\t %v wanted %v", res.(core.Item), wantedItem)
+			}
+			if got != tt.want {
+				t.Errorf("InsertItem() = %v, want %v", got, tt.want)
+			}
+
 		})
 	}
 }
