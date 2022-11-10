@@ -14,7 +14,7 @@ type RepoDriver struct {
 
 func New() *RepoDriver {
 	db := utility.InitDriver()
-	drv := RepoDriver{drv: *db}
+	drv := RepoDriver{drv: db}
 	return &drv
 }
 
@@ -25,7 +25,7 @@ func (r *RepoDriver) GetItems() []core.Item {
 
 	res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 		res := make([]core.Item, 0)
-		query := `MATCH (m:Item) RETURN m`
+		query := `MATCH (m:Item) RETURN m ORDER BY m.sku`
 		result, err := tx.Run(query, nil)
 		if err != nil {
 			log.Fatal(err)
@@ -74,8 +74,8 @@ func (r *RepoDriver) GetItemFromSku(sku int) (core.Item, error) {
 		log.Fatal(error)
 	}
 	if res == nil {
-		fmt.Println("RES NIL")
-		//log.Fatal()
+		fmt.Print("RES NIL\n")
+		return *new(core.Item), nil
 	}
 	return res.(core.Item), nil
 }
