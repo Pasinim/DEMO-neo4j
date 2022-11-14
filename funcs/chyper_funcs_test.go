@@ -244,10 +244,26 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		session := drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 		t.Run(tt.name, func(t *testing.T) {
 			r := &RepoDriver{
 				drv: tt.fields.drv,
 			}
+			count, err := session.WriteTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+				query := "MATCH (m:Item) RETURN COUNT(m)"
+				res, err := tx.Run(query, nil)
+				if err != nil {
+					log.Fatal(err)
+				}
+				res.Next()
+				return res.Record().Values[0].(int64), nil
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			//conto i nodi prima dell'interimento
+			nNodi := count.(int64)
+			got := r.InsertItem(tt.args.nome, tt.args.sku)
 			session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 			res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 				query := `MATCH (m:Item) WHERE m.nome = $wantedNome AND m.sku = $wantedSku RETURN m`
@@ -270,7 +286,23 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			got := r.InsertItem(tt.args.nome, tt.args.sku)
+
+			count2, err := session.WriteTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+				query := "MATCH (m:Item) RETURN COUNT(m)"
+				res, err := tx.Run(query, map[string]interface{}{})
+				if err != nil {
+					log.Fatal(nil)
+				}
+				res.Next()
+				return res.Record().Values[0].(int64), nil
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			diff := count2.(int64) - nNodi
+			if diff != 1 {
+				fmt.Println("Bug, è stato inserito più di un nodo all'interno della finzione Insert")
+			}
 
 			// creo Item per fare il confronto con quello che ottengo dalla query
 			wantedItem := core.Item{

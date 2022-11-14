@@ -47,6 +47,11 @@ func (r *RepoDriver) ContainsItem(nome string, sku int) bool {
 	return result.(bool)
 }
 
+/*
+*
+Se non è presente inserisce il nodo Item all'interno del dd, altrimenti non fa nulla.
+Al termine di ogni inserimento avvenuto con successo verifica anche che sia stato creato uno e un solo nood
+*/
 func (r *RepoDriver) InsertItem(nome string, sku int) bool {
 	session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer func(session neo4j.Session) {
@@ -78,7 +83,7 @@ func (r *RepoDriver) GetItems() []core.Item {
 	defer func(session neo4j.Session) {
 		err := session.Close()
 		if err != nil {
-
+			log.Fatal(err)
 		}
 	}(session)
 
