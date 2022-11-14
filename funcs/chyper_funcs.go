@@ -60,11 +60,12 @@ func (r *RepoDriver) InsertItem(nome string, sku int) bool {
 			log.Fatal(err)
 		}
 	}(session)
-	if r.ContainsItem(nome, sku) {
-		return false
-	}
+	//if r.ContainsItem(nome, sku) {
+	//	return false
+	//}
 	ok, err := session.WriteTransaction(func(tx neo4j.Transaction) (interface{}, error) {
-		query := `CREATE (i:Item{nome: $newNome, sku: $newSku})`
+		//ora che ho sku come chiave primaria posso direttamente fare il merge
+		query := `MERGE (i:Item{nome: $newNome, sku: $newSku})`
 		_, err := tx.Run(query, map[string]interface{}{"newNome": nome, "newSku": sku})
 		if err != nil {
 			log.Fatal(err)

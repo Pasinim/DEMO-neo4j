@@ -213,7 +213,6 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   bool
 	}{
 		{
 			name:   "Insert 1",
@@ -222,7 +221,6 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 				nome: "InsertTest",
 				sku:  100,
 			},
-			want: true,
 		},
 		{
 			name:   "Insert Uguale 1",
@@ -231,7 +229,6 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 				nome: "InsertTest",
 				sku:  100,
 			},
-			want: false,
 		},
 		{
 			name:   "Insert Uguale 2",
@@ -240,7 +237,6 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 				nome: "InsertTest",
 				sku:  100,
 			},
-			want: false,
 		},
 	}
 	for _, tt := range tests {
@@ -263,7 +259,7 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 			}
 			//conto i nodi prima dell'interimento
 			nNodi := count.(int64)
-			got := r.InsertItem(tt.args.nome, tt.args.sku)
+			r.InsertItem(tt.args.nome, tt.args.sku)
 			session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 			res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 				query := `MATCH (m:Item) WHERE m.nome = $wantedNome AND m.sku = $wantedSku RETURN m`
@@ -312,9 +308,6 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 
 			if !(cmp.Equal(res.(core.Item), wantedItem)) {
 				fmt.Printf("\t %v wanted %v", res.(core.Item), wantedItem)
-			}
-			if got != tt.want {
-				t.Errorf("InsertItem() = %v, want %v", got, tt.want)
 			}
 		})
 	}
