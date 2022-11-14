@@ -7,3 +7,4 @@ CREATE (AM98:Item{nome: "AirMax 98", sku: 33})
 CREATE (NikeHoodie:Item {nome: "Felpa con Cappuccio", sku: 44 })
 
 CREATE (AdidasHoodie:Item {nome: "Felpa senza Cappuccio", sku: 55})
+
