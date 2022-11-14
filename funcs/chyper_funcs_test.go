@@ -11,6 +11,7 @@ import (
 	"testing"
 )
 
+// creo una var condivisa per il driver, altrimenti se lo creo in ogni test diventa troppo dispendioso
 var drv = utility.InitDriver()
 
 func TestRepoDriver_GetItemFromSku(t *testing.T) {
@@ -152,6 +153,54 @@ func TestRepoDriver_GetItems(t *testing.T) {
 	}
 }
 
+func TestRepoDriver_ContainsItem(t *testing.T) {
+	type fields struct {
+		drv neo4j.Driver
+	}
+	type args struct {
+		nome string
+		sku  int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "Non presente",
+			fields: fields{drv: drv},
+			args: args{
+				nome: "x",
+				sku:  123,
+			},
+			want: false,
+		},
+
+		{
+			name: "Presente",
+			fields: fields{
+				drv: drv,
+			},
+			args: args{
+				nome: "Air Force 1",
+				sku:  11,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+			r := &RepoDriver{drv: tt.fields.drv}
+			got := r.ContainsItem(tt.args.nome, tt.args.sku)
+			if got != tt.want {
+				t.Errorf("ContainsItem() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestRepoDriver_InsertItem(t *testing.T) {
 	type fields struct {
 		drv neo4j.Driver
@@ -175,6 +224,24 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			name:   "Insert Uguale 1",
+			fields: fields{drv: drv},
+			args: args{
+				nome: "InsertTest",
+				sku:  100,
+			},
+			want: false,
+		},
+		{
+			name:   "Insert Uguale 2",
+			fields: fields{drv: drv},
+			args: args{
+				nome: "InsertTest",
+				sku:  100,
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -182,8 +249,6 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 				drv: tt.fields.drv,
 			}
 			session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
-			r.InsertItem(tt.args.nome, tt.args.sku)
-
 			res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 				query := `MATCH (m:Item) WHERE m.nome = $wantedNome AND m.sku = $wantedSku RETURN m`
 				result, err := tx.Run(query, map[string]interface{}{"wantedNome": tt.args.nome, "wantedSku": tt.args.sku})
@@ -193,9 +258,7 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 				}
 				var i core.Item
 				for result.Next() {
-					//if (result.Record() == nil){
-					//	return nil,
-					//}
+
 					props := result.Record().Values[0].(neo4j.Node).Props
 					i = core.Item{
 						Name: props["nome"].(string),
@@ -221,7 +284,6 @@ func TestRepoDriver_InsertItem(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("InsertItem() = %v, want %v", got, tt.want)
 			}
-
 		})
 	}
 }

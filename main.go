@@ -14,6 +14,9 @@ func main() {
 	if !b {
 		log.Fatal(b)
 	}
+	//:= r.ContainsItem("ciccio", 123)
+	fmt.Println(r.ContainsItem("x", 12222223))
+
 	//}
 	//	log.Fatal(err)
 	//if err != nil {

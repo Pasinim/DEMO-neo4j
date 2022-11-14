@@ -18,21 +18,51 @@ func New() *RepoDriver {
 	return &drv
 }
 
+// ContainsItem
+// RESTITUISCE TRUE SE ITEM (NOME, SKU) È PRESENTE NEL DB, FALSO ALTRIMENTI/**
+func (r *RepoDriver) ContainsItem(nome string, sku int) bool {
+	sessione := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
+	result, err := sessione.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+		query := `MATCH (m:Item) WHERE m.nome = $wantedNome AND m.sku = $wantedSku RETURN m`
+		res, err := tx.Run(query, map[string]interface{}{"wantedNome": nome, "wantedSku": sku})
+		if err != nil {
+			log.Fatal(err)
+		}
+		res.Next()
+		if res.Record() == nil {
+			return false, nil
+		}
+		props := res.Record().Values[0].(neo4j.Node).Props
+		if props["nome"].(string) != nome {
+			return false, nil
+		}
+		if int(props["sku"].(int64)) != sku {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	return result.(bool)
+}
+
 func (r *RepoDriver) InsertItem(nome string, sku int) bool {
 	session := r.drv.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer func(session neo4j.Session) {
 		err := session.Close()
 		if err != nil {
-
+			log.Fatal(err)
 		}
 	}(session)
+	if r.ContainsItem(nome, sku) {
+		return false
+	}
 	ok, err := session.WriteTransaction(func(tx neo4j.Transaction) (interface{}, error) {
-		//dovrei controllare che l'item non sia già presente
 		query := `CREATE (i:Item{nome: $newNome, sku: $newSku})`
 		_, err := tx.Run(query, map[string]interface{}{"newNome": nome, "newSku": sku})
 		if err != nil {
 			log.Fatal(err)
-			return false, err
 		}
 		return true, nil
 	})
@@ -83,7 +113,6 @@ func (r *RepoDriver) GetItemFromSku(sku int) (core.Item, error) {
 	defer func(session neo4j.Session) {
 		err := session.Close()
 		if err != nil {
-
 		}
 	}(session)
 	res, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
